@@ -6,6 +6,7 @@ use std::{
     io::{self, Error, ErrorKind, Write},
     sync::mpsc,
 };
+use chrono::{Local, Datelike, Timelike};
 
 fn main() -> std::io::Result<()> {
     
@@ -13,9 +14,8 @@ fn main() -> std::io::Result<()> {
     print!("Enter IP address (default: 0.0.0.0): ");
     io::stdout().flush().unwrap();
     io::stdin().read_line(&mut ip_addr).unwrap();
-    if ip_addr.is_empty() {
-        ip_addr = "0.0.0.0".to_string();
-    }
+    ip_addr = if ip_addr.trim().is_empty() {"0.0.0.0".to_string()}
+    else { ip_addr.trim().to_string() };
     ip_addr += ":55555";
 
     let socket = UdpSocket::bind(ip_addr)
@@ -28,13 +28,16 @@ fn main() -> std::io::Result<()> {
     let server_address = "192.168.0.145:55556";
     let timeout = Duration::from_millis(300);
 
-    let output_filename = env::current_exe().unwrap()
-        .parent().unwrap().join("output.txt");
+    let now = Local::now();
+    let file_name = format!("digiVIT_output_{:04}{:02}{:02}_{:02}{:02}{:02}.txt",
+        now.year(), now.month(), now.day(), now.hour(), now.minute(), now.second());
+    let full_filename = env::current_exe().unwrap()
+        .parent().unwrap().join(&file_name);
     let mut file = OpenOptions::new()
         .write(true)
         .create(true)
         .truncate(true)
-        .open(output_filename)?;
+        .open(full_filename)?;
 
     let (sender, receiver) = mpsc::channel();
 
