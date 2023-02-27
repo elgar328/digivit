@@ -3,7 +3,7 @@ use std::{
     fs::OpenOptions,
     net::{UdpSocket, SocketAddr},
     time::{Duration, Instant},
-    io::{self, Error, ErrorKind, Write, stdin, stdout},
+    io::{self, Error, ErrorKind, Write},
     sync::mpsc,
 };
 
@@ -40,7 +40,7 @@ fn main() -> std::io::Result<()> {
 
     thread::spawn(move || {
         let mut input = String::new();
-        stdin().read_line(&mut input).unwrap();
+        io::stdin().read_line(&mut input).unwrap();
         sender.send(()).unwrap();
     });
 
