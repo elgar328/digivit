@@ -1,5 +1,5 @@
 [package]
-name = "digivit_daq"
+name = "digivit"
 version = "0.1.0"
 edition = "2021"
 
