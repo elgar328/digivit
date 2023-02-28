@@ -32,3 +32,5 @@ Used to communicate with the KAMAN digiVIT via the ethernet port.
 > Default gateway : 192.168.0.145
 >
 > Preferred DNS server : 8.8.8.8
+
+<img src="https://user-images.githubusercontent.com/93251045/221884676-fd124b22-c5dd-4f3d-983e-022fe944e92e.png"  width="700">
