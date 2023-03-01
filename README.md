@@ -1,8 +1,8 @@
 # digivit
 
-Used to communicate with the KAMAN digiVIT via the ethernet port.
+Data logger for KAMAN digiVIT
 
-- It has only a simple function of periodically transmitting 'MD' command to digiVIT and collecting Distance Output. The rest of the work, such as editing settings, must be done directly in digiVIT.
+- It has a simple function of sending 'MD' commands to digiVIT periodically through the ethernet port and collecting the distance output. The rest of the work, such as editing settings, must be done directly in digiVIT.
 
 - It is designed to collect data from a single digiVIT deviceand, and is not intended for multiple digiVITs. 
 
