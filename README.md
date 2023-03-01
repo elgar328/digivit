@@ -30,7 +30,5 @@ Data logger for KAMAN digiVIT
 > Subnet mask : 255.255.255.0
 >
 > Default gateway : 192.168.0.145
->
-> Preferred DNS server : 8.8.8.8
 
 <img src="https://user-images.githubusercontent.com/93251045/221889563-0c22bdd5-42c6-446f-9b03-c70409c8e8ab.png"  width="700">
