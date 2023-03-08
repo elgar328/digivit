@@ -1,18 +1,19 @@
 use std::{
-    collections::HashMap,
     env,
-    fs::{self, OpenOptions},
-    io::{self, Error, ErrorKind, Write},
-    net::UdpSocket,
     str,
-    sync::{mpsc, Arc, Mutex},
-    thread,
+    fs::{self, OpenOptions},
+    io::{self, Write},
+    sync::Arc,
     time::{Duration, Instant},
+    collections::HashMap,
+    net::SocketAddr,
 };
+use tokio::{net::UdpSocket, sync::mpsc};
 
-fn main() -> std::io::Result<()> {
+#[tokio::main]
+async fn main() -> io::Result<()> {
     // digiVIT address
-    let digivit_addr = "192.168.0.145:55556";
+    let digivit_addr = "192.168.0.145:55556".parse::<SocketAddr>().unwrap();
 
     // MD : Monitor distance output
     let message = "MD";
@@ -26,7 +27,7 @@ fn main() -> std::io::Result<()> {
     // Sequence counter
     let mut seq_counter = SeqChar::A;
 
-    // UDP socket
+    // IP address
     print!(
         "Enter the IP address of the network interface, \
             or press ENTER to bind all network interfaces.\n"
@@ -39,11 +40,12 @@ fn main() -> std::io::Result<()> {
     } else {
         my_addr.trim().to_string() + ":55555"
     };
+    let my_addr = my_addr.parse::<SocketAddr>().expect("Invalid address format");
 
-    let socket = UdpSocket::bind(&my_addr).expect("Failed to bind socket");
-    socket.set_nonblocking(true)?;
-    let socket_sender = Arc::new(Mutex::new(socket));
-    let socket_receiver = Arc::clone(&socket_sender);
+    // UDP socket
+    let socket = UdpSocket::bind(&my_addr).await?;
+    let socket_sender = Arc::new(socket);
+    let socket_receiver = socket_sender.clone();
 
     // Sample rate
     println!("Enter the sampling rate or press ENTER to use the default value (50Hz).");
@@ -74,28 +76,24 @@ fn main() -> std::io::Result<()> {
         .open(&full_filename)?;
 
     // Keyboard channel
-    let (keyboard_sender, keyboard_receiver) = mpsc::channel();
+    let (keyboard_sender, mut keyboard_receiver) = mpsc::channel::<()>(5);
 
     // Keyboard thread
-    thread::spawn(move || {
+    tokio::spawn(async move {
         let mut input = String::new();
         io::stdin().read_line(&mut input).unwrap();
-        keyboard_sender.send(()).unwrap();
+        keyboard_sender.send(()).await.unwrap();
     });
 
     // Receive channel
-    let (data_sender, data_receiver) = mpsc::channel();
+    let (data_sender, mut data_receiver) = mpsc::channel::<(Vec<u8>, SocketAddr)>(1_000);
 
     // Receive thread
-    let _receive_handle = thread::spawn(move || {
-        let mut buf = [0u8; 1024];
+    tokio::spawn(async move {
+        let mut buf = [0; 1024];
         loop {
-            match socket_receiver.lock().unwrap().recv_from(&mut buf) {
-                Ok((size, addr)) => {
-                    data_sender.send((buf[0..size].to_vec(), addr)).unwrap();
-                }
-                Err(_) => {}
-            }
+            let (len, addr) = socket_receiver.recv_from(&mut buf).await.unwrap();
+            data_sender.send((buf[..len].to_vec(), addr)).await.unwrap();
         }
     });
 
@@ -115,10 +113,10 @@ fn main() -> std::io::Result<()> {
         // At sampling time
         if sample_time <= Instant::now() {
             // Send udp message
-            socket_sender.lock().unwrap().send_to(
+            socket_sender.send_to(
                 assemble_packet(&seq_counter, message).as_bytes(),
                 digivit_addr,
-            )?;
+            ).await.unwrap();
             let _ = time_map.insert(seq_counter, start_time.elapsed());
 
             // Increase seq_char
@@ -148,26 +146,19 @@ fn main() -> std::io::Result<()> {
         }
 
         // If there is received data, store it in data_map
-        let timeout = Duration::from_millis(1);
-        match data_receiver.recv_timeout(timeout) {
-            Ok((received, _sender_addr)) => {
-                let data_str = String::from_utf8(received).map_err(|e| {
-                    Error::new(ErrorKind::Other, format!("Invalid UTF-8 sequence: {}", e))
-                })?;
-                if !verify_checksum(&data_str) {
-                    eprintln!("Checksum error");
-                    continue;
-                }
-                match SeqChar::from_str(&data_str[0..1]) {
-                    Some(seq_char) => {
-                        // Overwrite if a value for the same key already exists.
-                        let _ =
-                            data_map.insert(seq_char, data_str[2..data_str.len() - 4].to_owned());
-                    }
-                    None => eprintln!("Sequence character error"),
-                }
+        if let Some((bytes, _addr)) = data_receiver.recv().await {
+            let data_str = String::from_utf8(bytes).unwrap();
+            if !verify_checksum(&data_str) {
+                eprintln!("Checksum error");
+                continue;
             }
-            Err(_) => {}
+            match SeqChar::from_str(&data_str[0..1]) {
+                Some(seq_char) => {
+                    // Overwrite if a value for the same key already exists.
+                    let _ = data_map.insert(seq_char, data_str[2..data_str.len() - 4].to_owned());
+                }
+                None => eprintln!("Sequence character error"),
+            }
         }
 
         // Check keyboard input
