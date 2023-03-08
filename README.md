@@ -2,11 +2,12 @@
 
 Data logger for KAMAN digiVIT
 
-- It has a simple function of sending 'MD' commands to digiVIT periodically through the ethernet port and collecting the distance output. The rest of the work, such as editing settings, must be done directly in digiVIT.
+- Distance data is periodically collected from digiVIT via Ethernet port and stored in a file.
 
-- It is designed to collect data from a single digiVIT deviceand, and is not intended for multiple digiVITs. 
+- It is designed to work with a single digiVIT device and is not intended for multiple devices.
 
 - A Distance Output of 100,000 corresponds to 100% of the measurement range.
+
 - Use the default IP address and ports for digiVIT.
 
 > Default IP Address: 192.168.0.145
@@ -15,13 +16,13 @@ Data logger for KAMAN digiVIT
 >
 > Default UDP Reader Port: 55556
 
-- Since the process of requesting data from the computer to digiVIT is done through synchronous udp communication, the sample rate depends on the network environment.
+- It is available in various network connections as shown below.
 
-> ≈ 30 Hz  @  (**computer**←-------wireless-------→**router**←-------wire-------→**digiVIT**)
+> **computer**←-------wireless-------→**router**←-------wire-------→**digiVIT**
 >
-> ≈ 50 Hz  @  (**computer**←-------wire-------→**router**←-------wire-------→**digiVIT**)
+> **computer**←-------wire-------→**router**←-------wire-------→**digiVIT**
 >
-> ≈ 50 Hz  @  (**computer**←-------crossed wire-------→**digiVIT**)
+> **computer**←-------crossed wire-------→**digiVIT**
 
 - To directly connect the computer and digiVIT with a crossed wire, set the Internet Protocol (TCP/IP) properties of the computer as follows:
 
@@ -30,5 +31,7 @@ Data logger for KAMAN digiVIT
 > Subnet mask : 255.255.255.0
 >
 > Default gateway : 192.168.0.145
+
+- If you encounter a lot of missing data, use a slower sampling rate.
 
 <img src="https://user-images.githubusercontent.com/93251045/221889563-0c22bdd5-42c6-446f-9b03-c70409c8e8ab.png"  width="700">
