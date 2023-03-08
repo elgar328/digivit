@@ -1,12 +1,12 @@
 use std::{
+    collections::HashMap,
     env,
-    str,
     fs::{self, OpenOptions},
     io::{self, Write},
+    net::SocketAddr,
+    str,
     sync::Arc,
     time::{Duration, Instant},
-    collections::HashMap,
-    net::SocketAddr,
 };
 use tokio::{net::UdpSocket, sync::mpsc};
 
@@ -40,7 +40,9 @@ async fn main() -> io::Result<()> {
     } else {
         my_addr.trim().to_string() + ":55555"
     };
-    let my_addr = my_addr.parse::<SocketAddr>().expect("Invalid address format");
+    let my_addr = my_addr
+        .parse::<SocketAddr>()
+        .expect("Invalid address format");
 
     // UDP socket
     let socket = UdpSocket::bind(&my_addr).await?;
@@ -103,7 +105,7 @@ async fn main() -> io::Result<()> {
 
     println!("\nData acquisition in progress..\nPress ENTER to stop.");
     let start_time = Instant::now();
-    let mut sample_time = Instant::now() - sample_period;
+    let mut sample_time = start_time;
 
     let mut break_requested = false;
     let mut break_seq = SeqChar::A;
@@ -113,10 +115,13 @@ async fn main() -> io::Result<()> {
         // At sampling time
         if sample_time <= Instant::now() {
             // Send udp message
-            socket_sender.send_to(
-                assemble_packet(&seq_counter, message).as_bytes(),
-                digivit_addr,
-            ).await.unwrap();
+            socket_sender
+                .send_to(
+                    assemble_packet(&seq_counter, message).as_bytes(),
+                    digivit_addr,
+                )
+                .await
+                .unwrap();
             let _ = time_map.insert(seq_counter, start_time.elapsed());
 
             // Increase seq_char
@@ -146,7 +151,7 @@ async fn main() -> io::Result<()> {
         }
 
         // If there is received data, store it in data_map
-        if let Some((bytes, _addr)) = data_receiver.recv().await {
+        if let Ok((bytes, _addr)) = data_receiver.try_recv() {
             let data_str = String::from_utf8(bytes).unwrap();
             if !verify_checksum(&data_str) {
                 eprintln!("Checksum error");
