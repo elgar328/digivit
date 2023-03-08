@@ -34,4 +34,4 @@ Data logger for KAMAN digiVIT
 
 - If you encounter a lot of missing data, use a slower sampling rate.
 
-<img src="https://user-images.githubusercontent.com/93251045/221889563-0c22bdd5-42c6-446f-9b03-c70409c8e8ab.png"  width="700">
+<img src="https://user-images.githubusercontent.com/93251045/223617407-1061718d-a5c4-41ee-8327-a6ef83d446de.png"  width="700">
