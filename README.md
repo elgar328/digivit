@@ -1,5 +1,7 @@
 # digivit
 
+<img width="250" alt="KAMAN digiVIT" src="https://github.com/elgar328/digivit/assets/93251045/ddc88b36-6fd5-4be0-847c-008ee3b6517d">
+
 Data logger for KAMAN digiVIT
 
 - Distance data is periodically collected from digiVIT via Ethernet port and stored in a file.
